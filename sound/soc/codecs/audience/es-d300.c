@@ -1091,7 +1091,7 @@ exit:
 static int es300_codec_enable_slimtx(struct snd_soc_dapm_widget *w,
 		struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = w->codec;
+	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
 	struct escore_priv *escore = snd_soc_codec_get_drvdata(codec);
 	u32  j = 0;
 	int  ret = 0;
@@ -1176,7 +1176,7 @@ static int es300_codec_enable_slimtx(struct snd_soc_dapm_widget *w,
 static int es300_codec_enable_slimrx(struct snd_soc_dapm_widget *w,
 		struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = w->codec;
+	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
 	struct escore_priv *escore = snd_soc_codec_get_drvdata(codec);
 	u32  j = 0;
 	int  ret = 0;
@@ -1279,7 +1279,7 @@ static int es300_codec_enable_slimtx(struct snd_soc_dapm_widget *w,
 static int es300_codec_enable_i2srx(struct snd_soc_dapm_widget *w,
 		struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = w->codec;
+	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
 	struct escore_priv *escore = snd_soc_codec_get_drvdata(codec);
 	int ret = 0;
 	int j = 0;
@@ -1287,7 +1287,7 @@ static int es300_codec_enable_i2srx(struct snd_soc_dapm_widget *w,
 
 	pr_debug("%s(): event:%d\n", __func__, event);
 
-	mutex_lock(&codec->mutex);
+	mutex_lock(&escore->codec_mutex);
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
 		for (j = 0; j < escore->dai_nr; j++) {
@@ -1355,13 +1355,13 @@ static int es300_codec_enable_i2srx(struct snd_soc_dapm_widget *w,
 			escore->active_streams);
 		break;
 	}
-	mutex_unlock(&codec->mutex);
+	mutex_unlock(&escore->codec_mutex);
 	return ret;
 }
 static int es300_codec_enable_i2stx(struct snd_soc_dapm_widget *w,
 		struct snd_kcontrol *kcontrol, int event)
 {
-	struct snd_soc_codec *codec = w->codec;
+	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
 	struct escore_priv *escore = snd_soc_codec_get_drvdata(codec);
 	int ret = 0;
 	int j = 0;
@@ -1369,7 +1369,7 @@ static int es300_codec_enable_i2stx(struct snd_soc_dapm_widget *w,
 
 	pr_debug("%s(): event:%d\n", __func__, event);
 
-	mutex_lock(&codec->mutex);
+	mutex_lock(&escore->codec_mutex);
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
 		for (j = 0; j < escore->dai_nr; j++) {
@@ -1433,7 +1433,7 @@ static int es300_codec_enable_i2stx(struct snd_soc_dapm_widget *w,
 			escore->active_streams);
 		break;
 	}
-	mutex_unlock(&codec->mutex);
+	mutex_unlock(&escore->codec_mutex);
 	return ret;
 }
 #endif
@@ -1662,7 +1662,7 @@ static int es300_put_algo_state(struct snd_kcontrol *kcontrol,
 	unsigned int reg = e->reg;
 	unsigned int value = ucontrol->value.enumerated.item[0];
 
-	mutex_lock(&codec->mutex);
+	mutex_lock(&escore->codec_mutex);
 	pr_debug("%s(): %s algo :%s\n", __func__, (value) ? "Enabling" :
 			"Disabling", kcontrol->id.name);
 	/* Use 0th array to store the algo status */
@@ -1730,7 +1730,7 @@ static int es300_put_algo_state(struct snd_kcontrol *kcontrol,
 		escore->algo_type_off = algo_type;
 	}
 out:
-	mutex_unlock(&codec->mutex);
+	mutex_unlock(&escore->codec_mutex);
 	return ret;
 }
 static int es300_put_algo_rate(struct snd_kcontrol *kcontrol,
@@ -1744,9 +1744,9 @@ static int es300_put_algo_rate(struct snd_kcontrol *kcontrol,
 	int ret = 0;
 	unsigned int value = ucontrol->value.enumerated.item[0];
 
-	mutex_lock(&codec->mutex);
+	mutex_lock(&escore->codec_mutex);
 	cachedcmd_list[escore->algo_type][reg].reg = value;
-	mutex_unlock(&codec->mutex);
+	mutex_unlock(&escore->codec_mutex);
 
 	return ret;
 }
@@ -1801,9 +1801,9 @@ static int put_input_route_value(struct snd_kcontrol *kcontrol,
 #elif (defined(CONFIG_ARCH_OMAP) || defined(CONFIG_ARCH_EXYNOS) || \
 		defined(CONFIG_X86_32) || defined(CONFIG_ARCH_TEGRA) || \
 		defined(CONFIG_ARCH_MSM8994))
-	rc = snd_soc_dapm_mux_update_power(&codec->dapm, kcontrol, mux, e, &update);
+	rc = snd_soc_dapm_mux_update_power(snd_soc_codec_get_dapm(codec), kcontrol, mux, e, &update);
 #else
-	rc = snd_soc_dapm_mux_update_power(&codec->dapm, kcontrol, 1, mux, e, &update);
+	rc = snd_soc_dapm_mux_update_power(snd_soc_codec_get_dapm(codec), kcontrol, 1, mux, e, &update);
 #endif
 
 exit:
@@ -1886,9 +1886,9 @@ static int put_output_route_value(struct snd_kcontrol *kcontrol,
 #elif (defined(CONFIG_ARCH_OMAP) || defined(CONFIG_ARCH_EXYNOS) || \
 		defined(CONFIG_X86_32) || defined(CONFIG_ARCH_TEGRA) || \
 		defined(CONFIG_ARCH_MSM8994))
-	rc = snd_soc_dapm_mux_update_power(&codec->dapm, kcontrol, mux, e, &update);
+	rc = snd_soc_dapm_mux_update_power(snd_soc_codec_get_dapm(codec), kcontrol, mux, e, &update);
 #else
-	rc = snd_soc_dapm_mux_update_power(&codec->dapm, kcontrol, 1, mux, e, &update);
+	rc = snd_soc_dapm_mux_update_power(snd_soc_codec_get_dapm(codec), kcontrol, 1, mux, e, &update);
 #endif
 
 exit:
@@ -1939,7 +1939,7 @@ static int put_dhwpt_sel(struct snd_kcontrol *kcontrol,
 	struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
 	struct escore_priv *escore = snd_soc_codec_get_drvdata(codec);
 
-	mutex_lock(&codec->mutex);
+	mutex_lock(&escore->codec_mutex);
 	escore->dhwpt_enabled = ucontrol->value.enumerated.item[0];
 	pr_debug("put DHWPT enable control val %d\n", escore->dhwpt_enabled);
 
@@ -1949,7 +1949,7 @@ static int put_dhwpt_sel(struct snd_kcontrol *kcontrol,
 		_es_stop_route(escore, ES_TYPE_CAP);
 		mutex_unlock(&escore->access_lock);
 	}
-	mutex_unlock(&codec->mutex);
+	mutex_unlock(&escore->codec_mutex);
 	return 0;
 }
 
@@ -1970,9 +1970,9 @@ static int put_asr_sel(struct snd_kcontrol *kcontrol,
 	struct snd_soc_codec *codec = escore_priv.codec;
 	struct escore_priv *escore = snd_soc_codec_get_drvdata(codec);
 
-	mutex_lock(&codec->mutex);
+	mutex_lock(&escore->codec_mutex);
 	escore->vp_asr = ucontrol->value.enumerated.item[0];
-	mutex_unlock(&codec->mutex);
+	mutex_unlock(&escore->codec_mutex);
 
 	return 0;
 }
@@ -2018,9 +2018,9 @@ static int put_vp_aec(struct snd_kcontrol *kcontrol,
 	struct snd_soc_codec *codec = escore_priv.codec;
 	struct escore_priv *escore = snd_soc_codec_get_drvdata(codec);
 
-	mutex_lock(&codec->mutex);
+	mutex_lock(&escore->codec_mutex);
 	escore->vp_aec = ucontrol->value.enumerated.item[0];
-	mutex_unlock(&codec->mutex);
+	mutex_unlock(&escore->codec_mutex);
 
 	return 0;
 }
@@ -2323,7 +2323,7 @@ static int put_pri_pb_mode(struct snd_kcontrol *kcontrol,
 
 	escore->pri_pb_mode = ucontrol->value.enumerated.item[0];
 
-	mutex_lock(&codec->mutex);
+	mutex_lock(&escore->codec_mutex);
 	mutex_lock(&escore->access_lock);
 	switch (algo_type) {
 	case PASSTHRU_VP:
@@ -2338,7 +2338,7 @@ static int put_pri_pb_mode(struct snd_kcontrol *kcontrol,
 		break;
 	}
 	mutex_unlock(&escore->access_lock);
-	mutex_unlock(&codec->mutex);
+	mutex_unlock(&escore->codec_mutex);
 
 	return rc;
 }
@@ -2360,7 +2360,7 @@ static int put_sec_pb_mode(struct snd_kcontrol *kcontrol,
 
 	escore->sec_pb_mode = ucontrol->value.enumerated.item[0];
 
-	mutex_lock(&codec->mutex);
+	mutex_lock(&escore->codec_mutex);
 	mutex_lock(&escore->access_lock);
 	switch (algo_type) {
 	case PASSTHRU_VP:
@@ -2375,7 +2375,7 @@ static int put_sec_pb_mode(struct snd_kcontrol *kcontrol,
 		break;
 	}
 	mutex_unlock(&escore->access_lock);
-	mutex_unlock(&codec->mutex);
+	mutex_unlock(&escore->codec_mutex);
 
 	return rc;
 }
@@ -2436,7 +2436,7 @@ static int put_preset_value_one(struct snd_kcontrol *kcontrol,
 
 	value = ucontrol->value.integer.value[0];
 
-	mutex_lock(&codec->mutex);
+	mutex_lock(&escore->codec_mutex);
 	escore->algo_preset_one = (u16) value;
 
 	/* Ignore Preset ID 0 and don't send command to device,
@@ -2446,7 +2446,7 @@ static int put_preset_value_one(struct snd_kcontrol *kcontrol,
 		dev_dbg(escore_priv.dev,
 			"%s(): Preset ID %d is not supported\n",
 			__func__, value);
-		mutex_unlock(&codec->mutex);
+		mutex_unlock(&escore->codec_mutex);
 		return rc;
 	}
 
@@ -2461,7 +2461,7 @@ static int put_preset_value_one(struct snd_kcontrol *kcontrol,
 			dev_err(escore_priv.dev, "%s(): Set Preset one failed:%d\n",
 				__func__, rc);
 	}
-	mutex_unlock(&codec->mutex);
+	mutex_unlock(&escore->codec_mutex);
 
 	return rc;
 }
@@ -2486,7 +2486,7 @@ static int put_preset_value_two(struct snd_kcontrol *kcontrol,
 
 	value = ucontrol->value.integer.value[0];
 
-	mutex_lock(&codec->mutex);
+	mutex_lock(&escore->codec_mutex);
 	escore->algo_preset_two = (u16) value;
 
 	/* Ignore Preset ID 0 and don't send command to device,
@@ -2496,7 +2496,7 @@ static int put_preset_value_two(struct snd_kcontrol *kcontrol,
 		dev_dbg(escore_priv.dev,
 			"%s(): Preset ID %d is not supported\n",
 			__func__, value);
-		mutex_unlock(&codec->mutex);
+		mutex_unlock(&escore->codec_mutex);
 		return rc;
 	}
 
@@ -2511,7 +2511,7 @@ static int put_preset_value_two(struct snd_kcontrol *kcontrol,
 			dev_err(escore_priv.dev, "%s(): Set Preset two failed:%d\n",
 				__func__, rc);
 	}
-	mutex_unlock(&codec->mutex);
+	mutex_unlock(&escore->codec_mutex);
 	return rc;
 }
 
@@ -2586,9 +2586,9 @@ static int put_hpf_mode(struct snd_kcontrol *kcontrol,
 
 	pr_debug("%s(): HPF mode Put:%d\n", __func__, value);
 
-	mutex_lock(&codec->mutex);
+	mutex_lock(&escore->codec_mutex);
 	escore->hpf_mode = value;
-	mutex_unlock(&codec->mutex);
+	mutex_unlock(&escore->codec_mutex);
 
 	return ret;
 }
@@ -4732,7 +4732,7 @@ int es_d300_add_snd_soc_dapm_controls(struct snd_soc_codec *codec)
 {
 	int rc;
 
-	rc = snd_soc_dapm_new_controls(&codec->dapm, es_d300_dapm_widgets,
+	rc = snd_soc_dapm_new_controls(snd_soc_codec_get_dapm(codec), es_d300_dapm_widgets,
 			ARRAY_SIZE(es_d300_dapm_widgets));
 
 	return rc;
@@ -4742,7 +4742,7 @@ int es_d300_add_snd_soc_route_map(struct snd_soc_codec *codec)
 {
 	int rc;
 
-	rc = snd_soc_dapm_add_routes(&codec->dapm, intercon,
+	rc = snd_soc_dapm_add_routes(snd_soc_codec_get_dapm(codec), intercon,
 			ARRAY_SIZE(intercon));
 
 	return rc;

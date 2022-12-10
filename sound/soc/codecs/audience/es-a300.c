@@ -285,7 +285,7 @@ static const struct snd_kcontrol_new mic1_pga_mux_controls =
 static int mic_event(struct snd_soc_dapm_widget *w,
 		struct snd_kcontrol *k, int event)
 {
-	struct snd_soc_codec *codec = w->codec;
+	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
 	pr_debug("%s() %x\n", __func__, SND_SOC_DAPM_EVENT_ON(event));
 
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
@@ -497,7 +497,7 @@ int es_analog_add_snd_soc_dapm_controls(struct snd_soc_codec *codec)
 {
 	int rc;
 
-	rc = snd_soc_dapm_new_controls(&codec->dapm, es_codec_dapm_widgets,
+	rc = snd_soc_dapm_new_controls(snd_soc_codec_get_dapm(codec), es_codec_dapm_widgets,
 					ARRAY_SIZE(es_codec_dapm_widgets));
 
 	return rc;
@@ -506,7 +506,7 @@ int es_analog_add_snd_soc_route_map(struct snd_soc_codec *codec)
 {
 	int rc;
 
-	rc = snd_soc_dapm_add_routes(&codec->dapm, intercon,
+	rc = snd_soc_dapm_add_routes(snd_soc_codec_get_dapm(codec), intercon,
 					ARRAY_SIZE(intercon));
 
 	return rc;

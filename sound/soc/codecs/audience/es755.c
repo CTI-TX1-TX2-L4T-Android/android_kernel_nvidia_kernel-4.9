@@ -1284,10 +1284,10 @@ static int es755_set_power_saving_mode(struct snd_kcontrol *kcontrol,
 	struct snd_soc_codec *codec = escore_priv.codec;
 	struct escore_priv *escore = snd_soc_codec_get_drvdata(codec);
 
-	mutex_lock(&codec->mutex);
+	mutex_lock(&escore->codec_mutex);
 	/* Value 0 is used to disable Power Level support */
 	escore->power_saving_mode = ucontrol->value.enumerated.item[0];
-	mutex_unlock(&codec->mutex);
+	mutex_unlock(&escore->codec_mutex);
 
 	return 0;
 }
@@ -2089,7 +2089,7 @@ static int es755_set_bias_level(struct snd_soc_codec *codec,
 				      enum snd_soc_bias_level level)
 {
 	pr_debug("%s(): Setting bias level to :%d\n", __func__, level);
-	codec->dapm.bias_level = level;
+	//codec->dapm.bias_level = level;
 	return 0;
 }
 
@@ -3301,7 +3301,7 @@ int es755_core_probe(struct device *dev)
 {
 	struct esxxx_platform_data *pdata;
 	int rc = 0;
-	unsigned long irq_flags = IRQF_DISABLED;
+	unsigned long irq_flags = IRQF_TRIGGER_NONE;
 #if defined(CONFIG_SND_SOC_ES854)
 	const char *fw_filename = "audience/es854/audience-es854-fw.bin";
 	const char *fw_af_filename = "audience/es854/audience-es755-af.bin";
@@ -3357,7 +3357,7 @@ int es755_core_probe(struct device *dev)
 	escore_priv.pdata = pdata;
 
 	mutex_init(&escore_priv.datablock_dev.datablock_read_mutex);
-	mutex_init(&escore_priv.pm_mutex);
+	mutex_init(&escore_priv.codec_mutex);
 	mutex_init(&escore_priv.streaming_mutex);
 	mutex_init(&escore_priv.msg_list_mutex);
 	mutex_init(&escore_priv.datablock_dev.datablock_mutex);

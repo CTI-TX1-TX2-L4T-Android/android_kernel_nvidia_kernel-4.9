@@ -612,7 +612,7 @@ struct escore_priv {
 	int selected_endpoint; /* Selected endpoint(pathID) for following digital gain setting */
 	u32 digital_gain[ES_DIGITAL_GAIN_MAX_NUM];
 
-	struct mutex pm_mutex;
+	struct mutex codec_mutex;
 
 	struct mutex msg_list_mutex;
 	struct list_head msg_list;
